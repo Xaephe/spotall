@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpotAll — Your All-Time Top Songs Playlist</title>
+    <meta name="description" content="Upload your Spotify Extended Streaming History and create playlists from your most played songs. Top 500, 1000, or 5000 songs — automatically!">
+    <meta name="theme-color" content="#15A046">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Ccircle cx='60' cy='60' r='56' fill='%2315A046'/%3E%3Cpath d='M35 42 L60 58 L85 42' stroke='white' stroke-width='6' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Cpath d='M38 54 L60 67 L82 54' stroke='white' stroke-width='5.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Cpath d='M42 65 L60 76 L78 65' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="style.css">
+    <!-- JSZip for ZIP file parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+</head>
+<body>
+    <!-- Background animated particles -->
+    <div class="bg-particles" id="bgParticles"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-inner">
+            <div class="logo">
+                <svg class="logo-icon" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="60" cy="60" r="56" stroke="currentColor" stroke-width="4" fill="none"/>
+                    <path d="M35 42 L60 58 L85 42" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <path d="M38 54 L60 67 L82 54" stroke="currentColor" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <path d="M42 65 L60 76 L78 65" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                </svg>
+                <span class="logo-text" data-i18n="appName">SpotAll</span>
+            </div>
+            <div class="header-actions">
+                <div class="lang-selector" id="langSelector"></div>
+                <div class="user-info" id="userInfo" style="display: none;">
+                    <img id="userAvatar" class="user-avatar" src="" alt="avatar">
+                    <span id="userName" class="user-name"></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Progress Steps -->
+    <div class="progress-container">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="steps">
+            <div class="step active" data-step="1">
+                <div class="step-circle">1</div>
+                <span class="step-label" data-i18n="step1Label">Upload Data</span>
+            </div>
+            <div class="step" data-step="2">
+                <div class="step-circle">2</div>
+                <span class="step-label" data-i18n="step2Label">Analyze</span>
+            </div>
+            <div class="step" data-step="3">
+                <div class="step-circle">3</div>
+                <span class="step-label" data-i18n="step3Label">Configure</span>
+            </div>
+            <div class="step" data-step="4">
+                <div class="step-circle">4</div>
+                <span class="step-label" data-i18n="step4Label">Create Playlist</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Step 1: Upload -->
+        <section class="wizard-step active" id="step1">
+            <div class="step-content">
+                <div class="step-header">
+                    <h1 data-i18n="step1Title">Upload Your Spotify Listening Data</h1>
+                    <p class="step-description" data-i18n="step1Desc">Upload your <strong>Extended Streaming History</strong> JSON files from Spotify.</p>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-card-icon">💡</div>
+                    <div class="info-card-content">
+                        <h3 data-i18n="howToTitle">How to get your data?</h3>
+                        <ol>
+                            <li data-i18n="howToStep1">Go to <a href="https://www.spotify.com/account/privacy/" target="_blank" rel="noopener">Spotify Privacy Settings</a></li>
+                            <li data-i18n="howToStep2">Check "Extended streaming history"</li>
+                            <li data-i18n="howToStep3">Click "Request data"</li>
+                            <li data-i18n="howToStep4">Spotify will send your data via email within 5-30 days</li>
+                            <li data-i18n="howToStep5">Upload the ZIP file or the JSON files from it here</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-zone-content">
+                        <div class="upload-icon">
+                            <svg viewBox="0 0 64 64" fill="none">
+                                <path d="M32 44V20M32 20L22 30M32 20L42 30" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M8 40V50C8 53.3137 10.6863 56 14 56H50C53.3137 56 56 53.3137 56 50V40" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <p class="upload-text" data-i18n="uploadDragText">Drag & drop JSON or ZIP files here</p>
+                        <p class="upload-subtext" data-i18n="uploadOr">or</p>
+                        <button class="btn btn-outline" id="browseBtn" data-i18n="uploadBrowse">Browse Files</button>
+                        <input type="file" id="fileInput" multiple accept=".json,.zip" style="display: none;">
+                    </div>
+                </div>
+
+                <div class="uploaded-files" id="uploadedFiles" style="display: none;">
+                    <h3 data-i18n="uploadedFilesTitle">Uploaded Files</h3>
+                    <div class="file-list" id="fileList"></div>
+                    <button class="btn btn-primary btn-lg" id="analyzeBtn">
+                        <span data-i18n="analyzeBtn">Analyze</span>
+                        <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
+                            <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 2: Analyze -->
+        <section class="wizard-step" id="step2">
+            <div class="step-content">
+                <div class="step-header">
+                    <h2 data-i18n="step2Title">Listening Analysis</h2>
+                    <p class="step-description" data-i18n="step2Desc">Your complete listening history has been analyzed! Here are the results:</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">🎵</div>
+                        <div class="stat-value" id="statTotalSongs">0</div>
+                        <div class="stat-label" data-i18n="statUniqueSongs">Unique Songs</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🔄</div>
+                        <div class="stat-value" id="statTotalPlays">0</div>
+                        <div class="stat-label" data-i18n="statTotalPlays">Total Plays</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⏱️</div>
+                        <div class="stat-value" id="statTotalTime">0</div>
+                        <div class="stat-label" data-i18n="statTotalTime">Total Time</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">👑</div>
+                        <div class="stat-value" id="statTopArtist">-</div>
+                        <div class="stat-label" data-i18n="statTopArtist">Top Artist</div>
+                    </div>
+                </div>
+
+                <!-- Top Songs Preview -->
+                <div class="songs-table-container">
+                    <div class="table-header">
+                        <h3 data-i18n="topSongsTitle">🏆 Most Played Songs</h3>
+                        <div class="table-search">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
+                                <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+                                <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                            <input type="text" id="searchInput" data-i18n="searchPlaceholder" data-i18n-attr="placeholder" placeholder="Search song or artist...">
+                        </div>
+                    </div>
+                    <div class="table-scroll" id="tableScroll">
+                        <table class="songs-table">
+                            <thead>
+                                <tr>
+                                    <th class="col-rank" data-i18n="colRank">#</th>
+                                    <th class="col-song" data-i18n="colSong">Song</th>
+                                    <th class="col-artist" data-i18n="colArtist">Artist</th>
+                                    <th class="col-plays" data-i18n="colPlays">Plays</th>
+                                    <th class="col-time" data-i18n="colTime">Time</th>
+                                </tr>
+                            </thead>
+                            <tbody id="songsTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="table-footer">
+                        <span id="showingCount" data-i18n="showingCount">Showing 0 songs</span>
+                        <button class="btn btn-ghost" id="loadMoreBtn" style="display:none;" data-i18n="loadMore">Load More</button>
+                    </div>
+                </div>
+
+                <div class="step-actions">
+                    <button class="btn btn-ghost" id="backToStep1">
+                        <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
+                            <path d="M19 12H5M5 12L12 5M5 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span data-i18n="backBtn">Back</span>
+                    </button>
+                    <button class="btn btn-primary btn-lg" id="goToStep3">
+                        <span data-i18n="playlistSettingsBtn">Playlist Settings</span>
+                        <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
+                            <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 3: Select -->
+        <section class="wizard-step" id="step3">
+            <div class="step-content">
+                <div class="step-header">
+                    <h2 data-i18n="step3Title">Playlist Settings</h2>
+                    <p class="step-description" data-i18n="step3Desc">Choose how many songs to include and set a playlist name.</p>
+                </div>
+
+                <div class="settings-card">
+                    <div class="setting-group">
+                        <label class="setting-label" data-i18n="songCountLabel">Song Count</label>
+                        <div class="count-options" id="countOptions">
+                            <button class="count-btn" data-count="100">Top 100</button>
+                            <button class="count-btn" data-count="500">Top 500</button>
+                            <button class="count-btn active" data-count="1000">Top 1000</button>
+                            <button class="count-btn" data-count="2500">Top 2500</button>
+                            <button class="count-btn" data-count="5000">Top 5000</button>
+                            <button class="count-btn" data-count="custom" data-i18n="customLabel">Custom</button>
+                        </div>
+                        <div class="custom-count" id="customCount" style="display:none;">
+                            <input type="number" class="text-input" id="customCountInput" min="1" max="10000" data-i18n="customPlaceholder" data-i18n-attr="placeholder" placeholder="Enter song count...">
+                        </div>
+                        <p class="setting-hint" id="countHint"><span data-i18n="availableHint" data-i18n-params='{"count":"0"}'></span> <span id="availableCount">0</span></p>
+                    </div>
+
+                    <div class="setting-group">
+                        <label class="setting-label" data-i18n="playlistNameLabel">Playlist Name</label>
+                        <input type="text" class="text-input" id="playlistName" value="My Top Songs — All Time">
+                    </div>
+
+                    <div class="setting-group">
+                        <label class="setting-label" data-i18n="playlistDescLabel">Playlist Description</label>
+                        <input type="text" class="text-input" id="playlistDesc" value="My most played songs, ranked by play count.">
+                    </div>
+
+                    <div class="setting-group">
+                        <label class="setting-label" data-i18n="filtersLabel">Filters</label>
+                        <div class="filter-options">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="filterShortPlays" checked>
+                                <span class="checkbox-custom"></span>
+                                <span data-i18n="filterShortPlays">Ignore plays shorter than 30 seconds</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="filterSkips">
+                                <span class="checkbox-custom"></span>
+                                <span data-i18n="filterSkips">Ignore skipped tracks</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-actions">
+                    <button class="btn btn-ghost" id="backToStep2">
+                        <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
+                            <path d="M19 12H5M5 12L12 5M5 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span data-i18n="backBtn">Back</span>
+                    </button>
+                    <button class="btn btn-primary btn-lg" id="goToStep4">
+                        <span data-i18n="createPlaylistBtn">Create Playlist</span>
+                        <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
+                            <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 4: Create Playlist -->
+        <section class="wizard-step" id="step4">
+            <div class="step-content">
+                <div class="step-header">
+                    <h2 data-i18n="step4Title">Create Playlist</h2>
+                    <p class="step-description" data-i18n="step4Desc">Connect to Spotify and create your playlist!</p>
+                </div>
+
+                <!-- Not connected state -->
+                <div class="connect-card" id="connectCard">
+                    <div class="connect-icon">
+                        <svg viewBox="0 0 48 48" fill="none">
+                            <circle cx="24" cy="24" r="22" stroke="currentColor" stroke-width="2"/>
+                            <path d="M14 29C18 27 28 26 34 29" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                            <path d="M16 23C19 21 28 20 33 22" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                            <path d="M18 17C21 15.5 28 15 32 17" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <h3 data-i18n="connectTitle">Connect to Spotify</h3>
+                    <p data-i18n="connectDesc">Log in to your Spotify account to create a playlist. We only request playlist creation permissions.</p>
+                    <button class="btn btn-spotify btn-lg" id="connectSpotifyBtn">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                            <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381C8.64 5.801 15.6 6.001 20.04 8.7c.5.3.66.9.36 1.38-.3.42-.96.6-1.32.36v-.06z"/>
+                        </svg>
+                        <span data-i18n="connectBtn">Connect with Spotify</span>
+                    </button>
+                </div>
+
+                <!-- Creating playlist state -->
+                <div class="creation-card" id="creationCard" style="display: none;">
+                    <div class="creation-header">
+                        <h3 id="creationTitle" data-i18n="creatingTitle">Creating playlist...</h3>
+                        <p id="creationSubtitle" data-i18n="creatingSub">Adding songs to Spotify</p>
+                    </div>
+
+                    <div class="progress-ring-container">
+                        <svg class="progress-ring" viewBox="0 0 120 120">
+                            <circle class="progress-ring-bg" cx="60" cy="60" r="54" />
+                            <circle class="progress-ring-fill" id="progressRing" cx="60" cy="60" r="54" />
+                        </svg>
+                        <div class="progress-ring-text" id="progressPercent">0%</div>
+                    </div>
+
+                    <div class="creation-stats">
+                        <div class="creation-stat">
+                            <span class="creation-stat-value" id="addedCount">0</span>
+                            <span class="creation-stat-label" data-i18n="addedLabel">Added</span>
+                        </div>
+                        <div class="creation-stat">
+                            <span class="creation-stat-value" id="totalToAdd">0</span>
+                            <span class="creation-stat-label" data-i18n="totalLabel">Total</span>
+                        </div>
+                        <div class="creation-stat">
+                            <span class="creation-stat-value" id="failedCount">0</span>
+                            <span class="creation-stat-label" data-i18n="failedLabel">Failed</span>
+                        </div>
+                    </div>
+
+                    <div class="creation-log" id="creationLog"></div>
+                </div>
+
+                <!-- Success state -->
+                <div class="success-card" id="successCard" style="display: none;">
+                    <div class="success-icon">🎉</div>
+                    <h3 data-i18n="successTitle">🎉 Playlist Created!</h3>
+                    <p id="successMessage" data-i18n="successMsg">Songs successfully added to your playlist.</p>
+                    <a class="btn btn-spotify btn-lg" id="openPlaylistBtn" href="#" target="_blank" rel="noopener">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                            <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381C8.64 5.801 15.6 6.001 20.04 8.7c.5.3.66.9.36 1.38-.3.42-.96.6-1.32.36v-.06z"/>
+                        </svg>
+                        <span data-i18n="openInSpotify">Open in Spotify</span>
+                    </a>
+                    <button class="btn btn-ghost" id="startOverBtn" data-i18n="startOver">Start Over</button>
+                </div>
+
+                <div class="step-actions" id="step4Actions">
+                    <button class="btn btn-ghost" id="backToStep3">
+                        <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
+                            <path d="M19 12H5M5 12L12 5M5 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span data-i18n="backBtn">Back</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>SpotAll &copy; 2026 — <span data-i18n="footerText">Your data is processed entirely in your browser. Nothing is sent to any server.</span></p>
+    </footer>
+
+    <!-- Toast notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
